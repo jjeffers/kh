@@ -7,33 +7,15 @@ window.onload = function() {
 		stone: [1,0,1,1]
 	});
 
-	iso = Crafty.isometric.size(128);
+	iso = Crafty.isometric.size(196,72);
 	var z = 0;
 	for(var i = 20; i >= 0; i--) {
 		for(var y = 0; y < 20; y++) {
-			var which = Crafty.math.randomInt(0,1);
+			var which = 0;
 			var tile = Crafty.e("2D, DOM, "+ (!which ? "grass" : "stone") +", Mouse")
 			.attr('z',i+1 * y+1)
-      .areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32])
-      .bind("Click", function(e) {
-				//destroy on right click
-        //right click seems not work in Mac OS
-        //delete it
-        console.log(e.button);
-				/*if(e.button === 2)*/ this.destroy();
-			}).bind("MouseOver", function() {
-				if(this.has("grass")) {
-					this.sprite(0,1,1,1);
-				} else {
-					this.sprite(1,1,1,1);
-				}
-			}).bind("MouseOut", function() {
-				if(this.has("grass")) {
-					this.sprite(0,0,1,1);
-				} else {
-					this.sprite(1,0,1,1);
-				}
-			});
+      .areaMap([28,0],[100,0],[128,36],[100,72],[28,72],[0,36])
+      
 			
 			iso.place(i,y,0, tile);
 		}
