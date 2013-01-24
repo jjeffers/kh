@@ -1,6 +1,6 @@
 //pro tip: see also this work in progress by Hex http://jsfiddle.net/hexaust/HV4TX/
 window.onload = function() {
-	Crafty.init();
+	Crafty.init(1024, 768);
 
 	Crafty.sprite(128, "images/sprite.png", {
 		grass: [0,0,1,1],
