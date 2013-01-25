@@ -63,7 +63,10 @@ window.onload = function() {
 		stone: [1,0,1,1]
 	});
 
+	Crafty.background("url('images/background.png')");
+	
 	iso = Crafty.isometric.size(196,72);
+	
 	var z = 0;
 	for(var i = 20; i >= 0; i--) {
 		for(var y = 0; y < 30; y++) {
