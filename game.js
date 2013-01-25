@@ -58,28 +58,36 @@ window.onload = function() {
 	
 	Crafty.init(1024, 768);
 
-	Crafty.sprite(128, "images/sprite.png", {
-		grass: [0,0,1,1],
-		stone: [1,0,1,1]
+	Crafty.sprite(1, "images/sprite.png", {
+		hex: [0,0]
 	});
 
+	Crafty.sprite(128, "images/ship.png", {
+		ship_n: [0,0],
+		ship_ne: [1,0]
+	});
+	
 	Crafty.background("url('images/background.png')");
 	
-	iso = Crafty.isometric.size(196,72);
-	
+	var iso = Crafty.diamondIso.init(196, 64, 10, 10);
+
 	var z = 0;
-	for(var i = 20; i >= 0; i--) {
-		for(var y = 0; y < 30; y++) {
-			var which = 0;
-			var tile = Crafty.e("2D, DOM, "+ (!which ? "grass" : "stone") +", Mouse")
-			.attr('z',i+1 * y+1)
-      .areaMap([28,0],[100,0],[128,36],[100,72],[28,72],[0,36])
+	for(var i = 10; i >= 0; i--) {
+		for(var y = 0; y < 10; y++) {
+			var tile = Crafty.e("2D, DOM, DiamondIsometric, hex, Mouse")
+				  .attr({w:128, h:64})
+			      .areaMap([28,0],[100,0],[128,32],[100,64],[28,64],[0,32])
       
-			
-			iso.place(i,y,0, tile);
+			iso.place(tile,i,y,0);
 		}
 	}
+	var ship = Crafty.e("2D, DOM, DiamondIsometric, ship_n").attr({w:128, h:64});
+	var ship2 = Crafty.e("2D, DOM, DiamondIsometric, ship_ne").attr({w:128, h:64});
 	
+	iso.place(ship, 0, 0, 0);
+	iso.place(ship2, 1, 0, 0);
+			
 	var player = Crafty.e("CustomControls, controls").CustomControls(10);
+	Crafty.viewport.clampToEntities = false;
 	
 };
