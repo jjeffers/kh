@@ -1,6 +1,10 @@
 //pro tip: see also this work in progress by Hex http://jsfiddle.net/hexaust/HV4TX/
 window.onload = function() {
 
+	Crafty.c("ShipToken", {
+		__map_x: 0,
+		__map_y: 0
+	});
 	
 	Crafty.c('CustomControls', {
 	    __move: {left: false, right: false, up: false, down: false},   
@@ -81,18 +85,16 @@ window.onload = function() {
 		__StartMapCoords: { x:0, y:0 },
 		__CurrentPointerMapCoords: { x:0, y: 0 },
 		__MoveBox: Crafty.e("2D, Canvas, Color").attr({w:50, h:10, alpha:0.5}).color("red"),
-		__map: new Array(100),
-		__ship: Crafty.e("2D, DOM, DiamondIsometric, ship_n").attr({w:128, h:64}),
+		__ship: Crafty.e("2D, DOM, DiamondIsometric, ShipToken, ship_n").attr({w:128, h:64}),
 		init: function() {
-			var length = this.__map.length
-			while(length--) this.__map[length] = new Array();
 			
 			this.__MoveBox.attr("visible",false)
 			this.bind('HexClick', function(pos) {
 				console.log("hex click at " + pos.x + " " + pos.y)
-				
-				if (this.__map[(pos.x*10)+pos.y].length > 0) {
-				
+				console.log(this.__ship.__map_x)
+				console.log(this.__ship.__map_x == pos.x)
+				if ((this.__ship.__map_x == pos.x) && (this.__ship.__map_y == pos.y)) {
+					console.log("a ship is there")
 					this.__StartMapCoords.x = pos.x
 					this.__StartMapCoords.y = pos.y
 					var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
@@ -106,7 +108,7 @@ window.onload = function() {
 				else this.__TileSelectedContainsShip = false
 			});
 			this.bind('HexMouseDown', function(pos) {
-				if (this.__map[(pos.x*10)+pos.y].length > 0) {
+				if ((this.__ship.__map_x == pos.x) && (this.__ship.__map_y == pos.y)) {
 					this.__StartMapCoords.x = pos.x
 					this.__StartMapCoords.y = pos.y
 					var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
@@ -184,16 +186,17 @@ window.onload = function() {
 					iso.place(tile,i,y,0);
 				}
 			}
-		
-			this.place(this.__ship, 1, 9);	
-			
 			
 			console.log("Created map")
+		
+			this.place(this.__ship, 1, 9);	
+
 		},
 		place: function(tile, x, y) {
 			iso.place(tile,x,y,0);
-			var location = this.__map[(x*10)+y]
-			location[location.length] = tile
+			console.log("ship placed at " + x + ", " + y)
+			tile.__map_x = x;
+			tile.__map_y = y
 		}
 	});
 	
