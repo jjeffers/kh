@@ -1,5 +1,7 @@
 //pro tip: see also this work in progress by Hex http://jsfiddle.net/hexaust/HV4TX/
 window.onload = function() {
+
+	
 	Crafty.c('CustomControls', {
 	    __move: {left: false, right: false, up: false, down: false},   
 	    __zoom: { in: false, out: false }, 
@@ -9,12 +11,10 @@ window.onload = function() {
 	      if (speed) this._speed = speed;
 	      var move = this.__move;
 		  var zoom = this.__zoom;
-			console.log("init");
 	      this.bind('EnterFrame', function() {
 	        if (move.right) {
 				//Crafty.viewport.scroll('x', Crafty.viewport.x+this._speed); 
 				Crafty.viewport.pan('x', this._speed, 1);
-				console.log("moving right");
 			}
 	        if (move.left) {
 				Crafty.viewport.pan('x', -1*this._speed, 1); 
@@ -28,12 +28,10 @@ window.onload = function() {
 	
 	      }).bind('KeyDown', function(e) {
 	        // Default movement booleans to false
-			console.log("keydown");
 	        move.right = move.left = move.down = move.up = false;
 	        // If keys are down, set the direction
 	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
 				move.right = true;
-				console.log("Right arrow down");
 			}
 	        if (e.keyCode === Crafty.keys.LEFT_ARROW) move.left = true;
 	        if (e.keyCode === Crafty.keys.UP_ARROW) move.up = true;
@@ -49,7 +47,11 @@ window.onload = function() {
 	        if (e.keyCode === Crafty.keys.DOWN_ARROW) move.down = false;
 			if (e.keyCode === Crafty.keys.Q) zoom.in = false;
 			if (e.keyCode === Crafty.keys.E) zoom.out = false;
-	      });
+			
+	      }).bind('mousedown', function(e) {
+		        var pos = Crafty.diamondIso.px2pos(e.realX, e.realY);
+				console.log("Click on map at " + this.__DragStart.x + " " + this.__DragStart.y);
+		      });
 
 	      return this;
 	    }
@@ -70,24 +72,130 @@ window.onload = function() {
 	Crafty.background("url('images/background.png')");
 	
 	var iso = Crafty.diamondIso.init(196, 64, 10, 10);
-
-	var z = 0;
-	for(var i = 10; i >= 0; i--) {
-		for(var y = 0; y < 10; y++) {
-			var tile = Crafty.e("2D, DOM, DiamondIsometric, hex, Mouse")
-				  .attr({w:128, h:64})
-			      .areaMap([28,0],[100,0],[128,32],[100,64],[28,64],[0,32])
-      
-			iso.place(tile,i,y,0);
-		}
-	}
-	var ship = Crafty.e("2D, DOM, DiamondIsometric, ship_n").attr({w:128, h:64});
-	var ship2 = Crafty.e("2D, DOM, DiamondIsometric, ship_ne").attr({w:128, h:64});
 	
-	iso.place(ship, 0, 0, 0);
-	iso.place(ship2, 1, 0, 0);
+
+	Crafty.c('MapManager', {
+		__TileOffset: { x:64, y:-32 },
+		__IsDragging: false,
+		__StartMapCoords: { x:0, y:0 },
+		__CurrentPointerMapCoords: { x:0, y: 0 },
+		__MoveBox: Crafty.e("2D, Canvas, Color").attr({w:50, h:10, alpha:0.5}).color("red"),
+		init: function() {
+			this.__MoveBox.attr("visible",false)
+			this.bind('HexClick', function(pos) {
+				this.__StartMapCoords.x = pos.x
+				this.__StartMapCoords.y = pos.y
+				var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
+				//console.log(px)
+				this.__MoveBox.attr("x", px.left + this.__TileOffset.x)
+				this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
+				this.__MoveBox.attr("visible", false)
+				console.log(this.__MoveBox)
+			});
+			this.bind('HexMouseDown', function(pos) {
+				this.__IsDragging = true;
+				//console.log(e)
+			});
+			this.bind('HexMouseUp', function(pos) {
+				this.__IsDragging = false;
+			});
+			this.bind('HexMouseMove', function(pos) {
+				if (this.__IsDragging)
+				{
+					this.__MoveBox.attr("visible", true)
+					this.__CurrentPointerMapCoords.x = pos.x
+					this.__CurrentPointerMapCoords.y = pos.y
+					
+					var pxStart = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
+					var pxEnd = iso.pos2px(this.__CurrentPointerMapCoords.x, this.__CurrentPointerMapCoords.y)
+					var deltaX = pxEnd.left-pxStart.left;
+					var deltaY = pxEnd.top-pxStart.top;
+					var length = Math.sqrt(Math.pow(deltaX,2) + Math.pow(deltaY,2))
+					
+					var angle = 0
+					if (deltaX == 0)
+					{
+						if (deltaY >= 0) angle = 90
+						else angle = 270
+					} 
+					else if (deltaX >= 0)
+					{
+						if (deltaY >= 0) angle = 18
+						else angle = 342
+					}
+					else if (deltaX < 0)
+					{
+						if (deltaY >= 0) angle = 162
+						else angle = 198
+					}
+					
+					this.__MoveBox.attr("rotation", angle)
+					//console.log(length)
+					
+					this.__MoveBox.attr("w", length)
+					//console.log(length)
+					//console.log("dragging to " + this.__CurrentPointerMapCoords.x +
+					//	" " + this.__CurrentPointerMapCoords.y)
+				}
+			});
+			this.bind("EnterFrame"), function()
+			{
+				if (this.__IsDragging)
+				{
+					
+				}
+			}
 			
-	var player = Crafty.e("CustomControls, controls").CustomControls(10);
+			
+			for(var i = 9; i >= 0; i--) {
+				for(var y = 9; y >= 0; y--) {
+					var tile = Crafty.e("2D, DOM, DiamondIsometric, hex, maphex, Mouse")
+						  .attr({w:128, h:64})
+					      .areaMap([28,0],[100,0],[128,32],[100,64],[28,64],[0,32]);
+
+					tile.setPos(i,y);
+
+					iso.place(tile,i,y,0);
+				}
+			}
+			console.log("Created map")
+		}
+	});
+	
+	Crafty.c('maphex', { 
+		_XMapCoordinate: 0,
+		_YMapCoordinate: 0,
+		init: function() {
+        	this.bind('Click', function(e) {
+				Crafty.trigger('HexClick', { x: this._XMapCoordinate, y: this._YMapCoordinate });
+			})
+			.bind('MouseDown', function(e) {
+				Crafty.trigger("HexMouseDown", { x: this._XMapCoordinate, y: this._YMapCoordinate });
+			});
+			this.bind('MouseMove', function(e) {
+				Crafty.trigger("HexMouseMove", { x: this._XMapCoordinate, y: this._YMapCoordinate });
+			});
+			this.bind('MouseUp', function(e) {
+				Crafty.trigger("HexMouseUp", { x: this._XMapCoordinate, y: this._YMapCoordinate });
+			});
+		},
+		setPos: function(x,y) {
+        	this._XMapCoordinate = x;
+ 			this._YMapCoordinate = y;
+		}
+	});
+	
+	
+	
+	
+	var ship = Crafty.e("2D, DOM, DiamondIsometric, ship_n")
+		//.areaMap([32,0],[92,0],[92,60],[32,60])
+		.attr({w:128, h:64});	
+	
+	iso.place(ship,1,9,0);
+	var player = Crafty.e("CustomControls, controls, Mouse").CustomControls(10);
+	
+	var game = Crafty.e("MapManager")
 	Crafty.viewport.clampToEntities = false;
 	
 };
