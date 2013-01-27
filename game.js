@@ -82,12 +82,14 @@ window.onload = function() {
 		__CurrentPointerMapCoords: { x:0, y: 0 },
 		__MoveBox: Crafty.e("2D, Canvas, Color").attr({w:50, h:10, alpha:0.5}).color("red"),
 		__map: new Array(100),
+		__ship: Crafty.e("2D, DOM, DiamondIsometric, ship_n").attr({w:128, h:64}),
 		init: function() {
 			var length = this.__map.length
-			while(length--) this.__map[length] =new Array();
+			while(length--) this.__map[length] = new Array();
 			
 			this.__MoveBox.attr("visible",false)
 			this.bind('HexClick', function(pos) {
+				console.log("hex click at " + pos.x + " " + pos.y)
 				
 				if (this.__map[(pos.x*10)+pos.y].length > 0) {
 				
@@ -98,18 +100,38 @@ window.onload = function() {
 					this.__MoveBox.attr("x", px.left + this.__TileOffset.x)
 					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
 					this.__MoveBox.attr("visible", false)
-					console.log(this.__MoveBox)
+					
 					this.__TileSelectedContainsShip = true;
 				}
 				else this.__TileSelectedContainsShip = false
 			});
 			this.bind('HexMouseDown', function(pos) {
-				if (this.__TileSelectedContainsShip)	this.__IsDragging = true;
+				if (this.__map[(pos.x*10)+pos.y].length > 0) {
+					this.__StartMapCoords.x = pos.x
+					this.__StartMapCoords.y = pos.y
+					var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
+					//console.log(px)
+					this.__MoveBox.attr("x", px.left + this.__TileOffset.x)
+					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
+					this.__MoveBox.attr("visible", false)
+					
+					this.__TileSelectedContainsShip = true;
+					this.__IsDragging = true;
+				}
 				//console.log(e)
 			});
 			this.bind('HexMouseUp', function(pos) {
-				this.__IsDragging = false;
-			});
+				
+				if (this.__IsDragging) {
+					console.log("moving ship")
+					this.__IsDragging = false;
+					this.__MoveBox.attr("visible", false)
+					this.place(this.__ship,pos.x,pos.y);
+					this.__StartMapCoords.x = pos.x
+					this.__StartMapCoords.y = pos.y
+				}
+			});	
+				
 			this.bind('HexMouseMove', function(pos) {
 				if (this.__IsDragging)
 				{
@@ -159,16 +181,11 @@ window.onload = function() {
 
 					tile.setPos(i,y);
 
-					
 					iso.place(tile,i,y,0);
 				}
 			}
-			
-			var ship = Crafty.e("2D, DOM, DiamondIsometric, ship_n")
-				//.areaMap([32,0],[92,0],[92,60],[32,60])
-				.attr({w:128, h:64});
-			
-			this.place(ship, 1, 9);	
+		
+			this.place(this.__ship, 1, 9);	
 			
 			
 			console.log("Created map")
