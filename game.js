@@ -76,24 +76,35 @@ window.onload = function() {
 
 	Crafty.c('MapManager', {
 		__TileOffset: { x:64, y:-32 },
+		__TileSelectedContainsShip: false,
 		__IsDragging: false,
 		__StartMapCoords: { x:0, y:0 },
 		__CurrentPointerMapCoords: { x:0, y: 0 },
 		__MoveBox: Crafty.e("2D, Canvas, Color").attr({w:50, h:10, alpha:0.5}).color("red"),
+		__map: new Array(100),
 		init: function() {
+			var length = this.__map.length
+			while(length--) this.__map[length] =new Array();
+			
 			this.__MoveBox.attr("visible",false)
 			this.bind('HexClick', function(pos) {
-				this.__StartMapCoords.x = pos.x
-				this.__StartMapCoords.y = pos.y
-				var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
-				//console.log(px)
-				this.__MoveBox.attr("x", px.left + this.__TileOffset.x)
-				this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
-				this.__MoveBox.attr("visible", false)
-				console.log(this.__MoveBox)
+				
+				if (this.__map[(pos.x*10)+pos.y].length > 0) {
+				
+					this.__StartMapCoords.x = pos.x
+					this.__StartMapCoords.y = pos.y
+					var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
+					//console.log(px)
+					this.__MoveBox.attr("x", px.left + this.__TileOffset.x)
+					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
+					this.__MoveBox.attr("visible", false)
+					console.log(this.__MoveBox)
+					this.__TileSelectedContainsShip = true;
+				}
+				else this.__TileSelectedContainsShip = false
 			});
 			this.bind('HexMouseDown', function(pos) {
-				this.__IsDragging = true;
+				if (this.__TileSelectedContainsShip)	this.__IsDragging = true;
 				//console.log(e)
 			});
 			this.bind('HexMouseUp', function(pos) {
@@ -138,14 +149,7 @@ window.onload = function() {
 					//	" " + this.__CurrentPointerMapCoords.y)
 				}
 			});
-			this.bind("EnterFrame"), function()
-			{
-				if (this.__IsDragging)
-				{
 					
-				}
-			}
-			
 			
 			for(var i = 9; i >= 0; i--) {
 				for(var y = 9; y >= 0; y--) {
@@ -155,10 +159,24 @@ window.onload = function() {
 
 					tile.setPos(i,y);
 
+					
 					iso.place(tile,i,y,0);
 				}
 			}
+			
+			var ship = Crafty.e("2D, DOM, DiamondIsometric, ship_n")
+				//.areaMap([32,0],[92,0],[92,60],[32,60])
+				.attr({w:128, h:64});
+			
+			this.place(ship, 1, 9);	
+			
+			
 			console.log("Created map")
+		},
+		place: function(tile, x, y) {
+			iso.place(tile,x,y,0);
+			var location = this.__map[(x*10)+y]
+			location[location.length] = tile
 		}
 	});
 	
@@ -183,19 +201,12 @@ window.onload = function() {
         	this._XMapCoordinate = x;
  			this._YMapCoordinate = y;
 		}
-	});
+	});	
 	
-	
-	
-	
-	var ship = Crafty.e("2D, DOM, DiamondIsometric, ship_n")
-		//.areaMap([32,0],[92,0],[92,60],[32,60])
-		.attr({w:128, h:64});	
-	
-	iso.place(ship,1,9,0);
 	var player = Crafty.e("CustomControls, controls, Mouse").CustomControls(10);
 	
 	var game = Crafty.e("MapManager")
+	
 	Crafty.viewport.clampToEntities = false;
 	
 };
