@@ -54,8 +54,8 @@ window.onload = function() {
 			
 	      }).bind('mousedown', function(e) {
 		        var pos = Crafty.diamondIso.px2pos(e.realX, e.realY);
-				console.log("Click on map at " + this.__DragStart.x + " " + this.__DragStart.y);
-		      });
+				//console.log("Click on map at " + this.__DragStart.x + " " + this.__DragStart.y);
+		  });
 
 	      return this;
 	    }
@@ -70,7 +70,11 @@ window.onload = function() {
 
 	Crafty.sprite(128, "images/ship.png", {
 		ship_n: [0,0],
-		ship_ne: [1,0]
+		ship_ne: [1,0],
+		ship_se: [2,0],
+		ship_s: [3,0],
+		ship_sw: [4,0],
+		ship_nw: [5,0]
 	});
 	
 	Crafty.background("url('images/background.png')");
@@ -80,21 +84,20 @@ window.onload = function() {
 
 	Crafty.c('MapManager', {
 		__TileOffset: { x:64, y:-32 },
-		__TileSelectedContainsShip: false,
 		__IsDragging: false,
 		__StartMapCoords: { x:0, y:0 },
 		__CurrentPointerMapCoords: { x:0, y: 0 },
 		__MoveBox: Crafty.e("2D, Canvas, Color").attr({w:50, h:10, alpha:0.5}).color("red"),
-		__ship: Crafty.e("2D, DOM, DiamondIsometric, ShipToken, ship_n").attr({w:128, h:64}),
+		__ship: Crafty.e("2D, DOM, DiamondIsometric, SpriteAnimation, ShipToken, ship_n")
+			.attr({w:128, h:64}),			
+		__eligibleMoves: new Array(),
 		init: function() {
 			
 			this.__MoveBox.attr("visible",false)
 			this.bind('HexClick', function(pos) {
-				console.log("hex click at " + pos.x + " " + pos.y)
-				console.log(this.__ship.__map_x)
-				console.log(this.__ship.__map_x == pos.x)
+				//console.log("hex click at " + pos.x + " " + pos.y)
+
 				if ((this.__ship.__map_x == pos.x) && (this.__ship.__map_y == pos.y)) {
-					console.log("a ship is there")
 					this.__StartMapCoords.x = pos.x
 					this.__StartMapCoords.y = pos.y
 					var px = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
@@ -102,10 +105,8 @@ window.onload = function() {
 					this.__MoveBox.attr("x", px.left + this.__TileOffset.x)
 					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
 					this.__MoveBox.attr("visible", false)
-					
-					this.__TileSelectedContainsShip = true;
 				}
-				else this.__TileSelectedContainsShip = false
+				
 			});
 			this.bind('HexMouseDown', function(pos) {
 				if ((this.__ship.__map_x == pos.x) && (this.__ship.__map_y == pos.y)) {
@@ -117,20 +118,59 @@ window.onload = function() {
 					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
 					this.__MoveBox.attr("visible", false)
 					
-					this.__TileSelectedContainsShip = true;
 					this.__IsDragging = true;
+					this.calculateEligibleMoves()
 				}
 				//console.log(e)
 			});
 			this.bind('HexMouseUp', function(pos) {
 				
 				if (this.__IsDragging) {
-					console.log("moving ship")
-					this.__IsDragging = false;
-					this.__MoveBox.attr("visible", false)
-					this.place(this.__ship,pos.x,pos.y);
-					this.__StartMapCoords.x = pos.x
-					this.__StartMapCoords.y = pos.y
+					
+					if (this.isAnEligibleMove(pos)) {
+						
+						this.__IsDragging = false;
+						this.__MoveBox.attr("visible", false)
+					
+						this.__ship.removeComponent("ship_n")
+						this.__ship.removeComponent("ship_ne")
+						this.__ship.removeComponent("ship_se")
+						this.__ship.removeComponent("ship_s")
+						this.__ship.removeComponent("ship_sw")
+						this.__ship.removeComponent("ship_nw")
+						
+						
+						if (pos.x == this.__ship.__map_x) {
+							if (pos.y > this.__ship.__map_y) {
+								this.__ship.addComponent("ship_sw").attr({w:128, h:64})
+							}
+							else if (pos.y < this.__ship.__map_y) {
+								this.__ship.addComponent("ship_ne").attr({w:128, h:64})
+							}
+						}
+						else if (pos.x > this.__ship.__map_x) {
+							if (pos.y > this.__ship.__map_y) {
+								this.__ship.addComponent("ship_s").attr({w:128, h:64})
+							}
+							else if (pos.y < this.__ship.__map_y) {
+								this.__ship.addComponent("ship_s").attr({w:128, h:64})
+							}
+							else this.__ship.addComponent("ship_se").attr({w:128, h:64})
+						}
+						else if (pos.x < this.__ship.__map_x) {
+							if (pos.y > this.__ship.__map_y) {
+								this.__ship.addComponent("ship_nw").attr({w:128, h:64})
+							}
+							else if (pos.y < this.__ship.__map_y) {
+								this.__ship.addComponent("ship_n").attr({w:128, h:64})
+							}
+							else this.__ship.addComponent("ship_nw").attr({w:128, h:64})
+						}
+						
+						this.place(this.__ship,pos.x, pos.y);
+							
+					}
+					else console.log("move to " + pos.x + ", " + pos.y + " was not an eligble move!")
 				}
 			});	
 				
@@ -168,9 +208,7 @@ window.onload = function() {
 					//console.log(length)
 					
 					this.__MoveBox.attr("w", length)
-					//console.log(length)
-					//console.log("dragging to " + this.__CurrentPointerMapCoords.x +
-					//	" " + this.__CurrentPointerMapCoords.y)
+
 				}
 			});
 					
@@ -189,14 +227,49 @@ window.onload = function() {
 			
 			console.log("Created map")
 		
-			this.place(this.__ship, 1, 9);	
+			this.place(this.__ship, 2, 7);	
+			
 
 		},
 		place: function(tile, x, y) {
+			
 			iso.place(tile,x,y,0);
-			console.log("ship placed at " + x + ", " + y)
+			
 			tile.__map_x = x;
-			tile.__map_y = y
+			tile.__map_y = y;
+			
+			this.__StartMapCoords.x = x
+			this.__StartMapCoords.y = y
+			
+		},
+		calculateEligibleMoves: function() {
+			this.__eligibleMoves = new Array()
+			for(var i = 9; i >= 0; i--) {
+				for(var j = 9; j >= 0; j--) {
+					if (this.__ship.__map_x == i) {
+						this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+						//console.log("added " + i + ", " + j + " to list of eligible moves")
+					}
+					else if (this.__ship.__map_y == j) {
+						this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+						//console.log("added " + i + ", " + j + " to list of eligible moves")
+					}
+					else {
+						m = (this.__ship.__map_y - j)/(this.__ship.__map_x - i)
+						//console.log("m was " + m)
+						if ((m == 1) || (m==-1)) {
+							this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+							//console.log("added " + i + ", " + j + " to list of eligible moves")
+						}
+					}
+				}
+			}
+		},
+		isAnEligibleMove: function(pos) {
+
+			return this.__eligibleMoves.some( function(element, index, array) {
+				return ((pos.x == element.x) && (pos.y == element.y)) 
+			})
 		}
 	});
 	
