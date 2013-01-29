@@ -3,7 +3,8 @@ window.onload = function() {
 
 	Crafty.c("ShipToken", {
 		__map_x: 0,
-		__map_y: 0
+		__map_y: 0,
+		__facing: 1
 	});
 	
 	Crafty.c('CustomControls', {
@@ -54,7 +55,7 @@ window.onload = function() {
 			
 	      }).bind('mousedown', function(e) {
 		        var pos = Crafty.diamondIso.px2pos(e.realX, e.realY);
-				//console.log("Click on map at " + this.__DragStart.x + " " + this.__DragStart.y);
+				console.log("Click on map at " + this.__DragStart.x + " " + this.__DragStart.y);
 		  });
 
 	      return this;
@@ -143,28 +144,40 @@ window.onload = function() {
 						if (pos.x == this.__ship.__map_x) {
 							if (pos.y > this.__ship.__map_y) {
 								this.__ship.addComponent("ship_sw").attr({w:128, h:64})
+								this.__ship.__facing = 5
 							}
 							else if (pos.y < this.__ship.__map_y) {
 								this.__ship.addComponent("ship_ne").attr({w:128, h:64})
+								this.__ship.__facing = 2
 							}
 						}
 						else if (pos.x > this.__ship.__map_x) {
 							if (pos.y > this.__ship.__map_y) {
 								this.__ship.addComponent("ship_s").attr({w:128, h:64})
+								this.__ship.__facing = 4
 							}
 							else if (pos.y < this.__ship.__map_y) {
 								this.__ship.addComponent("ship_s").attr({w:128, h:64})
+								this.__ship.__facing = 4
 							}
-							else this.__ship.addComponent("ship_se").attr({w:128, h:64})
+							else {
+								this.__ship.addComponent("ship_se").attr({w:128, h:64})
+								this.__ship.__facing = 3
+							}
 						}
 						else if (pos.x < this.__ship.__map_x) {
 							if (pos.y > this.__ship.__map_y) {
 								this.__ship.addComponent("ship_nw").attr({w:128, h:64})
+								this.__ship.__facing = 6
 							}
 							else if (pos.y < this.__ship.__map_y) {
 								this.__ship.addComponent("ship_n").attr({w:128, h:64})
+								this.__ship.__facing = 1
 							}
-							else this.__ship.addComponent("ship_nw").attr({w:128, h:64})
+							else {
+								this.__ship.addComponent("ship_nw").attr({w:128, h:64})
+								this.__ship.__facing = 6
+							}
 						}
 						
 						this.place(this.__ship,pos.x, pos.y);
@@ -181,34 +194,40 @@ window.onload = function() {
 					this.__CurrentPointerMapCoords.x = pos.x
 					this.__CurrentPointerMapCoords.y = pos.y
 					
-					var pxStart = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
-					var pxEnd = iso.pos2px(this.__CurrentPointerMapCoords.x, this.__CurrentPointerMapCoords.y)
-					var deltaX = pxEnd.left-pxStart.left;
-					var deltaY = pxEnd.top-pxStart.top;
-					var length = Math.sqrt(Math.pow(deltaX,2) + Math.pow(deltaY,2))
-					
-					var angle = 0
-					if (deltaX == 0)
-					{
-						if (deltaY >= 0) angle = 90
-						else angle = 270
-					} 
-					else if (deltaX >= 0)
-					{
-						if (deltaY >= 0) angle = 18
-						else angle = 342
-					}
-					else if (deltaX < 0)
-					{
-						if (deltaY >= 0) angle = 162
-						else angle = 198
+					if (this.isAnEligibleMove(pos.x, pos.y)) {
+						console.log(pos.x + ", " + pos.y + " would be a legal move")
 					}
 					
-					this.__MoveBox.attr("rotation", angle)
-					//console.log(length)
+					if (true) {
+						
+						var pxStart = iso.pos2px(this.__StartMapCoords.x, this.__StartMapCoords.y)
+						var pxEnd = iso.pos2px(this.__CurrentPointerMapCoords.x, this.__CurrentPointerMapCoords.y)
+						var deltaX = pxEnd.left-pxStart.left;
+						var deltaY = pxEnd.top-pxStart.top;
+						var length = Math.sqrt(Math.pow(deltaX,2) + Math.pow(deltaY,2))
 					
-					this.__MoveBox.attr("w", length)
-
+						var angle = 0
+						if (deltaX == 0)
+						{
+							if (deltaY >= 0) angle = 90
+							else angle = 270
+						} 
+						else if (deltaX >= 0)
+						{
+							if (deltaY >= 0) angle = 18
+							else angle = 342
+						}
+						else if (deltaX < 0)
+						{
+							if (deltaY >= 0) angle = 162
+							else angle = 198
+						}
+					
+						this.__MoveBox.attr("rotation", angle)
+						//console.log(length)
+					
+						this.__MoveBox.attr("w", length)
+					}
 				}
 			});
 					
@@ -227,7 +246,7 @@ window.onload = function() {
 			
 			console.log("Created map")
 		
-			this.place(this.__ship, 2, 7);	
+			this.place(this.__ship, 2, 6);	
 			
 
 		},
@@ -244,23 +263,71 @@ window.onload = function() {
 		},
 		calculateEligibleMoves: function() {
 			this.__eligibleMoves = new Array()
+			console.log("ship facing is " + this.__ship.__facing)
 			for(var i = 9; i >= 0; i--) {
 				for(var j = 9; j >= 0; j--) {
+					//console.log("looking at " + i + ", " + j)
 					if (this.__ship.__map_x == i) {
-						this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
-						//console.log("added " + i + ", " + j + " to list of eligible moves")
+						if (j < this.__ship.__map_y) {
+							
+							if ((this.__ship.__facing == 1) || 
+								(this.__ship.__facing == 2) || 
+								(this.__ship.__facing == 3)) {
+									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+									
+								}
+						}
+						else if (j > this.__ship.__map_y) {
+							if ((this.__ship.__facing == 4) ||
+								(this.__ship.__facing == 5) ||
+								(this.__ship.__facing == 6)) {
+									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+									//console.log("added " + i + ", " + j + " to list of eligible moves")
+								}
+						}
 					}
 					else if (this.__ship.__map_y == j) {
-						this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
-						//console.log("added " + i + ", " + j + " to list of eligible moves")
+						if (i > this.__ship.__map_x) {
+							if ((this.__ship.__facing == 2) || 
+								(this.__ship.__facing == 3) || 
+								(this.__ship.__facing == 4)) {
+									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+								}
+							}
+						else if (i < this.__ship.__map_x) {
+							if ((this.__ship.__facing == 1) || 
+								(this.__ship.__facing == 5) || 
+								(this.__ship.__facing == 6)) {
+									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+								}
+							}
 					}
 					else {
 						m = (this.__ship.__map_y - j)/(this.__ship.__map_x - i)
-						//console.log("m was " + m)
-						if ((m == 1) || (m==-1)) {
-							this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
-							//console.log("added " + i + ", " + j + " to list of eligible moves")
+						
+						if (m == 1) {
+							console.log("slope to " + i + ", " + j + " from " + 
+							this.__ship.__map_x + ", " +
+							this.__ship.__map_y + " was " + m)
+							console.log("ship facing is " + this.__ship.__facing)
+							if (i < this.__ship.__map_x) {
+								if ((this.__ship.__facing == 6) || 
+									(this.__ship.__facing == 1) || 
+									(this.__ship.__facing == 2)) {
+										this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+										console.log("added " + i + ", " + j + " to list of eligible moves")
+								}
+							}
+							else if (i > this.__ship.__map_x) {
+								if ((this.__ship.__facing == 3) || 
+									(this.__ship.__facing == 4) || 
+									(this.__ship.__facing == 5)) {
+										this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
+										console.log("added " + i + ", " + j + " to list of eligible moves")
+								}
+							}
 						}
+						
 					}
 				}
 			}
