@@ -11,13 +11,24 @@ window.onload = function() {
 		__currentMR: 2,
 		__currentSpeed: 3,
 		init: function() {
-			this.__movesLeft = __currentSpeed;
+			this.__movesLeft = this.__currentSpeed;
 		},
 		setFacing: function(new_facing) {
 			if (new_facing != this.__facing) Crafty.trigger("ShipTurned")
 			
 			this.__facing = new_facing;
-			this.__MR -= 1
+			this.__currentMR -= 1
+			
+			if (this.__currentMR < 0) this.__currentMR = 0
+		},
+		getFacing: function() {
+			return this.__facing
+		},
+		getCurrentMR: function() {
+			return this.__currentMR;
+		},
+		getMR: function() {
+			return this.__MR;
 		}
 	});
 
@@ -148,7 +159,7 @@ window.onload = function() {
 					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
 					this.__MoveBox.attr("visible", false)
 					
-					Crafty.trigger("ShipSelected", this.__ship.__MR);
+					Crafty.trigger("ShipSelected", this.__ship.getCurrentMR());
 					
 					this.__IsDragging = true;
 					this.calculateEligibleMoves()
@@ -215,7 +226,7 @@ window.onload = function() {
 						this.place(this.__ship,pos.x, pos.y);
 							
 					}
-					else console.log("move to " + pos.x + ", " + pos.y + " was not an eligble move!")
+					//else console.log("move to " + pos.x + ", " + pos.y + " was not an eligble move!")
 				}
 			});	
 				
@@ -302,17 +313,20 @@ window.onload = function() {
 					if (this.__ship.__map_x == i) {
 						if (j < this.__ship.__map_y) {
 							
-							if ((this.__ship.__facing == 1) || 
-								(this.__ship.__facing == 2) || 
-								(this.__ship.__facing == 3)) {
+							
+							if (((this.__ship.getFacing() == 1) || 
+								 (this.__ship.getFacing() == 2) || 
+								 (this.__ship.getFacing() == 3)) ||
+								((this.__ship.getCurrentMR() > 0) && (this.__ship.getFacing() == 2))) 
+								{
 									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
 									
 								}
 						}
 						else if (j > this.__ship.__map_y) {
-							if ((this.__ship.__facing == 4) ||
-								(this.__ship.__facing == 5) ||
-								(this.__ship.__facing == 6)) {
+							if ((this.__ship.getFacing() == 4) ||
+								(this.__ship.getFacing() == 5) ||
+								(this.__ship.getFacing() == 6)) {
 									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
 									//console.log("added " + i + ", " + j + " to list of eligible moves")
 								}
@@ -320,16 +334,16 @@ window.onload = function() {
 					}
 					else if (this.__ship.__map_y == j) {
 						if (i > this.__ship.__map_x) {
-							if ((this.__ship.__facing == 2) || 
-								(this.__ship.__facing == 3) || 
-								(this.__ship.__facing == 4)) {
+							if ((this.__ship.getFacing() == 2) || 
+								(this.__ship.getFacing() == 3) || 
+								(this.__ship.getFacing() == 4)) {
 									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
 								}
 							}
 						else if (i < this.__ship.__map_x) {
-							if ((this.__ship.__facing == 1) || 
-								(this.__ship.__facing == 5) || 
-								(this.__ship.__facing == 6)) {
+							if ((this.__ship.getFacing() == 1) || 
+								(this.__ship.getFacing() == 5) || 
+								(this.__ship.getFacing() == 6)) {
 									this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
 								}
 							}
@@ -343,17 +357,18 @@ window.onload = function() {
 							//this.__ship.__map_y + " was " + m)
 							//console.log("ship facing is " + this.__ship.__facing)
 							if (i < this.__ship.__map_x) {
-								if ((this.__ship.__facing == 6) || 
-									(this.__ship.__facing == 1) || 
-									(this.__ship.__facing == 2)) {
+								if (((this.__ship.getFacing() == 6) || 
+									 (this.__ship.getFacing() == 1) || 
+									 (this.__ship.getFacing() == 2)) ||
+									((this.__ship.getCurrentMR() > 0) && (this.__ship.getFacing() == 1)))  {
 										this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
 										//console.log("added " + i + ", " + j + " to list of eligible moves")
 								}
 							}
 							else if (i > this.__ship.__map_x) {
-								if ((this.__ship.__facing == 3) || 
-									(this.__ship.__facing == 4) || 
-									(this.__ship.__facing == 5)) {
+								if ((this.__ship.getFacing() == 3) || 
+									(this.__ship.getFacing() == 4) || 
+									(this.__ship.getFacing() == 5)) {
 										this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
 										//console.log("added " + i + ", " + j + " to list of eligible moves")
 								}
