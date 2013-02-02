@@ -1,11 +1,40 @@
 //pro tip: see also this work in progress by Hex http://jsfiddle.net/hexaust/HV4TX/
 window.onload = function() {
-
+	
 	Crafty.c("ShipToken", {
 		__map_x: 0,
 		__map_y: 0,
-		__facing: 1
+		__facing: 1,
+		__ADF: 3,
+		__MR: 2,
+		__movesLeft: 0,
+		__currentMR: 2,
+		__currentSpeed: 3,
+		init: function() {
+			this.__movesLeft = __currentSpeed;
+		},
+		setFacing: function(new_facing) {
+			if (new_facing != this.__facing) Crafty.trigger("ShipTurned")
+			
+			this.__facing = new_facing;
+			this.__MR -= 1
+		}
 	});
+
+	Crafty.c("HUD", {
+	       init: function() {
+
+	           if (this.has("DOM")) {
+	               this._element.parentNode.removeChild(this._element);
+	               Crafty.stage.elem.appendChild(this._element);
+	               this.z = 100;
+
+	               Crafty.addEvent(this, this._element, "click", function() {
+	                        //clicked
+	               });
+	           }
+	       }
+	   });
 	
 	Crafty.c('CustomControls', {
 	    __move: {left: false, right: false, up: false, down: false},   
@@ -90,7 +119,7 @@ window.onload = function() {
 		__CurrentPointerMapCoords: { x:0, y: 0 },
 		__MoveBox: Crafty.e("2D, Canvas, Color").attr({w:50, h:10, alpha:0.5}).color("red"),
 		__ship: Crafty.e("2D, DOM, DiamondIsometric, SpriteAnimation, ShipToken, ship_n")
-			.attr({w:128, h:64}),			
+			.attr({w:128, h:64}),
 		__eligibleMoves: new Array(),
 		init: function() {
 			
@@ -119,8 +148,12 @@ window.onload = function() {
 					this.__MoveBox.attr("y", px.top + this.__TileOffset.y)
 					this.__MoveBox.attr("visible", false)
 					
+					Crafty.trigger("ShipSelected", this.__ship.__MR);
+					
 					this.__IsDragging = true;
 					this.calculateEligibleMoves()
+					
+					
 				}
 				//console.log(e)
 			});
@@ -140,43 +173,42 @@ window.onload = function() {
 						this.__ship.removeComponent("ship_sw")
 						this.__ship.removeComponent("ship_nw")
 						
-						
 						if (pos.x == this.__ship.__map_x) {
 							if (pos.y > this.__ship.__map_y) {
 								this.__ship.addComponent("ship_sw").attr({w:128, h:64})
-								this.__ship.__facing = 5
+								this.__ship.setFacing(5)
 							}
 							else if (pos.y < this.__ship.__map_y) {
 								this.__ship.addComponent("ship_ne").attr({w:128, h:64})
-								this.__ship.__facing = 2
+								this.__ship.setFacing(2)
 							}
 						}
 						else if (pos.x > this.__ship.__map_x) {
 							if (pos.y > this.__ship.__map_y) {
 								this.__ship.addComponent("ship_s").attr({w:128, h:64})
-								this.__ship.__facing = 4
+								this.__ship.setFacing(4)
 							}
 							else if (pos.y < this.__ship.__map_y) {
 								this.__ship.addComponent("ship_s").attr({w:128, h:64})
-								this.__ship.__facing = 4
+								this.__ship.setFacing(4)
 							}
 							else {
 								this.__ship.addComponent("ship_se").attr({w:128, h:64})
-								this.__ship.__facing = 3
+								this.__ship.setFacing(3)
 							}
 						}
 						else if (pos.x < this.__ship.__map_x) {
 							if (pos.y > this.__ship.__map_y) {
 								this.__ship.addComponent("ship_nw").attr({w:128, h:64})
-								this.__ship.__facing = 6
+								this.__ship.setFacing(6)
 							}
 							else if (pos.y < this.__ship.__map_y) {
 								this.__ship.addComponent("ship_n").attr({w:128, h:64})
-								this.__ship.__facing = 1
+								this.__ship.setFacing(1)
 							}
 							else {
 								this.__ship.addComponent("ship_nw").attr({w:128, h:64})
-								this.__ship.__facing = 6
+								this.__ship.setFacing(6)
 							}
 						}
 						
@@ -234,7 +266,7 @@ window.onload = function() {
 			
 			for(var i = 9; i >= 0; i--) {
 				for(var y = 9; y >= 0; y--) {
-					var tile = Crafty.e("2D, DOM, DiamondIsometric, hex, maphex, Mouse")
+					var tile = Crafty.e("2D, DOM, DiamondIsometric, hex, maphex, Text, Mouse")
 						  .attr({w:128, h:64})
 					      .areaMap([28,0],[100,0],[128,32],[100,64],[28,64],[0,32]);
 
@@ -306,16 +338,16 @@ window.onload = function() {
 						m = (this.__ship.__map_y - j)/(this.__ship.__map_x - i)
 						
 						if (m == 1) {
-							console.log("slope to " + i + ", " + j + " from " + 
-							this.__ship.__map_x + ", " +
-							this.__ship.__map_y + " was " + m)
-							console.log("ship facing is " + this.__ship.__facing)
+							//console.log("slope to " + i + ", " + j + " from " + 
+							//this.__ship.__map_x + ", " +
+							//this.__ship.__map_y + " was " + m)
+							//console.log("ship facing is " + this.__ship.__facing)
 							if (i < this.__ship.__map_x) {
 								if ((this.__ship.__facing == 6) || 
 									(this.__ship.__facing == 1) || 
 									(this.__ship.__facing == 2)) {
 										this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
-										console.log("added " + i + ", " + j + " to list of eligible moves")
+										//console.log("added " + i + ", " + j + " to list of eligible moves")
 								}
 							}
 							else if (i > this.__ship.__map_x) {
@@ -323,7 +355,7 @@ window.onload = function() {
 									(this.__ship.__facing == 4) || 
 									(this.__ship.__facing == 5)) {
 										this.__eligibleMoves[this.__eligibleMoves.length] = { x:i, y:j }
-										console.log("added " + i + ", " + j + " to list of eligible moves")
+										//console.log("added " + i + ", " + j + " to list of eligible moves")
 								}
 							}
 						}
@@ -363,8 +395,41 @@ window.onload = function() {
 		}
 	});	
 	
+	Crafty.c('Display', {
+		__name: Crafty.e("DOM, HUD, Text").text("Ship").textColor('#FFFFFF'),
+		__MRLabel: Crafty.e("DOM, HUD, Text").text("MR").textColor('#FFFFFF').attr({y:20}),
+		__MR: Crafty.e("DOM, HUD, Text").textColor('#FFFFFF').attr({ x: 60, y:20}),
+		__currentMR: 0,
+		__MovesLeftLabel: Crafty.e("DOM, HUD, Text").text("MP Left").textColor('#FFFFFF').attr({y:40}),
+		__MovesLeft: Crafty.e("DOM, HUD, Text").text("3").textColor('#FFFFFF').attr({ x: 60, y:40}),
+		init: function() {
+        	this.bind('ShipMove', function(hexes_moved) {
+				this.decrementMR(hexes_moved)
+			})
+			this.bind('ShipSelected', function(mr) {
+				this.setMR(mr)
+			})
+			this.bind('ShipTurned', function() {
+				this.decrementMR(1)
+			})
+			
+		},
+		setMR: function(mr) {
+			this.__currentMR = mr;
+			this.__MR.text(this.__currentMR)
+		},
+		decrementMR: function(amount) {
+			console.log("old mr " + this.__currentMR)
+			this.__currentMR = this.__currentMR - amount;
+			console.log("new mr " + this.__currentMR)
+			if (this.__currentMR < 0) this.__currentMR = 0
+			this.__MR.text(this.__currentMR)
+		}
+	});
+	
 	var player = Crafty.e("CustomControls, controls, Mouse").CustomControls(10);
 	
+	var hud = Crafty.e('Display')
 	var game = Crafty.e("MapManager")
 	
 	Crafty.viewport.clampToEntities = false;
